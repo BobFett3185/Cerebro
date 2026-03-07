@@ -98,3 +98,34 @@ class AnswerSubmitResponse(BaseModel):
     answered_correctly: bool
     explanation: str = ""
     points_awarded: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Games
+# ---------------------------------------------------------------------------
+class GameEventRequest(BaseModel):
+    wallet_address: str = Field(..., min_length=1)
+    game_type: str
+    event_type: str
+    skill_topic: str = ""
+    metadata: dict[str, Any] = {}
+
+
+class GameEventResponse(BaseModel):
+    event_id: str
+    status: str = "recorded"
+
+
+class GameResultRequest(BaseModel):
+    winner_wallet: str = Field(..., min_length=1)
+    loser_wallet: str = Field(..., min_length=1)
+    game_type: str
+    skill_topic: str = ""
+
+
+class GameResultResponse(BaseModel):
+    result_id: str
+    winner_wallet: str
+    loser_wallet: str
+    game_type: str
+    reward: dict[str, Any] = {}

@@ -48,10 +48,12 @@ GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 # ---------------------------------------------------------------------------
-# Solana  (placeholder – fill in .env when ready)
+# Solana  (fill in .env for live devnet rewards)
 # ---------------------------------------------------------------------------
 SOLANA_RPC_URL: str = os.getenv("SOLANA_RPC_URL", "https://api.devnet.solana.com")
 SOLANA_PRIVATE_KEY: str = os.getenv("SOLANA_PRIVATE_KEY", "")
+SOLANA_MINT_ADDRESS: str = os.getenv("SOLANA_MINT_ADDRESS", "")
+SOLANA_REWARDS_ENABLED: bool = os.getenv("SOLANA_REWARDS_ENABLED", "false").lower() == "true"
 
 # ---------------------------------------------------------------------------
 # Collection names (single source of truth)
