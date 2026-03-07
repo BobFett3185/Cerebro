@@ -8,7 +8,6 @@ import App from "./App.jsx"
 console.log(import.meta.env)
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
     <Auth0Provider
       domain={import.meta.env.VITE_AUTH0_DOMAIN}
       clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
@@ -16,5 +15,4 @@ createRoot(document.getElementById("root")).render(
     >
       <App />
     </Auth0Provider>
-  </StrictMode>
 )
