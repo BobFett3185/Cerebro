@@ -213,6 +213,8 @@ export default function Chess() {
   const [copied, setCopied] = useState(false);
   const peerRef = useRef(null);
   const connRef = useRef(null);
+  const prevCapturedWCount = useRef(0);
+  const prevCapturedBCount = useRef(0);
 
   useEffect(() => {
     const peer = new Peer();
@@ -266,16 +268,6 @@ export default function Chess() {
     setCapturedW(newCapturedW);
     setCapturedB(newCapturedB);
 
-    if (captured) {
-      // Only show the question to the player who LOST the piece
-      const lostPieceColor = color(captured);
-      const amITheVictim = (lostPieceColor === 'w' && isHost) || (lostPieceColor === 'b' && !isHost);
-      
-      if (amITheVictim) {
-        setTimeout(() => setShowQuestion(true), 500);
-      }
-    }
-
     if (p2pStatus === "connected" && connRef.current) {
       connRef.current.send({
         type: 'move',
@@ -291,6 +283,27 @@ export default function Chess() {
       });
     }
   }, [capturedW, capturedB, p2pStatus, moveLog]);
+
+  // Central Question Trigger for captures
+  useEffect(() => {
+    // Only trigger if count increased (don't trigger on reset)
+    const wIncreased = capturedW.length > prevCapturedWCount.current;
+    const bIncreased = capturedB.length > prevCapturedBCount.current;
+    
+    if (wIncreased || bIncreased) {
+      // Determine if a piece matching MY color was taken
+      const myColor = isHost ? 'w' : 'b';
+      const myPieceLost = (myColor === 'w' && wIncreased) || (myColor === 'b' && bIncreased);
+      
+      if (myPieceLost) {
+        setTimeout(() => setShowQuestion(true), 500);
+      }
+    }
+    
+    // Always update counts
+    prevCapturedWCount.current = capturedW.length;
+    prevCapturedBCount.current = capturedB.length;
+  }, [capturedW, capturedB, isHost]);
 
   const doMove = useCallback((from, to, boardState, ep, castle) => {
     const piece  = boardState[from[0]][from[1]];
