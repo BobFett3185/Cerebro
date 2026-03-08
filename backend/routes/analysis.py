@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
+from pymongo.errors import PyMongoError
 
 from services.ml_service import build_skill_profile, get_cached_profile
 
@@ -16,7 +17,10 @@ class AnalysisInitRequest(BaseModel):
 @router.post("/init")
 async def init_analysis(body: AnalysisInitRequest) -> dict:
     """Compute (or recompute) a skill profile for the given wallet."""
-    profile = await build_skill_profile(body.wallet_address, body.selected_skills)
+    try:
+        profile = await build_skill_profile(body.wallet_address, body.selected_skills)
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
     return {
         "status": profile["status"],
         "wallet_address": profile["wallet_address"],
@@ -34,11 +38,12 @@ async def analysis_status(
     wallet_address: str = Query(..., min_length=1),
 ) -> dict:
     """Return the most recent skill profile. Returns cold-start if none exists."""
-    cached = await get_cached_profile(wallet_address)
-    if cached:
-        cached.pop("_id", None)
-        return cached
-
-    # No cached profile — generate a cold-start one
-    profile = await build_skill_profile(wallet_address, [])
-    return profile
+    try:
+        cached = await get_cached_profile(wallet_address)
+        if cached:
+            cached.pop("_id", None)
+            return cached
+        profile = await build_skill_profile(wallet_address, [])
+        return profile
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-load_dotenv()
+# Load .env from project root first, then backend/.env (with override) so backend can force local DB
+_env_root = Path(__file__).resolve().parent.parent / ".env"
+_env_backend = Path(__file__).resolve().parent / ".env"
+load_dotenv(_env_root)
+load_dotenv(_env_backend, override=True)  # backend/.env overrides (e.g. local MongoDB)
 
 # ---------------------------------------------------------------------------
 # MongoDB
@@ -19,8 +24,12 @@ _motor_client: AsyncIOMotorClient | None = None
 def get_motor_client() -> AsyncIOMotorClient:
     global _motor_client
     if _motor_client is None:
-        import certifi
-        _motor_client = AsyncIOMotorClient(MONGODB_URI, tlsCAFile=certifi.where())
+        # TLS only for Atlas (mongodb+srv); local MongoDB uses plain connection
+        if MONGODB_URI.startswith("mongodb+srv://"):
+            import certifi
+            _motor_client = AsyncIOMotorClient(MONGODB_URI, tlsCAFile=certifi.where())
+        else:
+            _motor_client = AsyncIOMotorClient(MONGODB_URI)
     return _motor_client
 
 

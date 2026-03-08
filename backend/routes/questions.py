@@ -3,7 +3,8 @@ from __future__ import annotations
 import hashlib
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
+from pymongo.errors import PyMongoError
 
 from config import EVENTS_COLLECTION, get_database
 from models.schemas import (
@@ -66,21 +67,24 @@ async def submit_answer(body: AnswerSubmitRequest) -> AnswerSubmitResponse:
             user_answer=body.selected_answer,
         )
 
-    # Log event to MongoDB
-    db = get_database()
-    question_id = _make_question_id(body.skill_topic, body.question_text)
-    await db[EVENTS_COLLECTION].insert_one({
-        "wallet_address": body.wallet_address,
-        "skill_topic": body.skill_topic,
-        "question_id": question_id,
-        "answered_correctly": answered_correctly,
-        "selected_answer": body.selected_answer,
-        "correct_answer": body.correct_answer,
-        "time_to_answer": body.time_to_answer,
-        "game_type": body.game_type,
-        "points_awarded": points_awarded,
-        "timestamp": datetime.now(timezone.utc),
-    })
+    # Log event to MongoDB (optional if DB unavailable)
+    try:
+        db = get_database()
+        question_id = _make_question_id(body.skill_topic, body.question_text)
+        await db[EVENTS_COLLECTION].insert_one({
+            "wallet_address": body.wallet_address,
+            "skill_topic": body.skill_topic,
+            "question_id": question_id,
+            "answered_correctly": answered_correctly,
+            "selected_answer": body.selected_answer,
+            "correct_answer": body.correct_answer,
+            "time_to_answer": body.time_to_answer,
+            "game_type": body.game_type,
+            "points_awarded": points_awarded,
+            "timestamp": datetime.now(timezone.utc),
+        })
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return AnswerSubmitResponse(
         answered_correctly=answered_correctly,

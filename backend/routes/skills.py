@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Query
+from pymongo.errors import PyMongoError
 
 from config import USERS_COLLECTION, get_database
 from models.schemas import (
@@ -34,12 +35,15 @@ async def list_skills(
     payload: dict = {"available_skills": AVAILABLE_SKILLS}
 
     if wallet_address:
-        db = get_database()
-        user = await db[USERS_COLLECTION].find_one(
-            {"wallet_address": wallet_address},
-            {"_id": 0, "wallet_address": 1, "username": 1,
-             "selected_skills": 1, "created_at": 1},
-        )
+        try:
+            db = get_database()
+            user = await db[USERS_COLLECTION].find_one(
+                {"wallet_address": wallet_address},
+                {"_id": 0, "wallet_address": 1, "username": 1,
+                 "selected_skills": 1, "created_at": 1},
+            )
+        except PyMongoError:
+            raise HTTPException(status_code=503, detail="Database temporarily unavailable")
         if user:
             payload["user"] = UserSkillsResponse(
                 wallet_address=user["wallet_address"],
@@ -61,10 +65,10 @@ async def select_skills(body: SkillSelectionRequest) -> SkillSelectionResponse:
             detail=f"Invalid skills: {invalid}. Choose from: {AVAILABLE_SKILLS}",
         )
 
-    db = get_database()
-    now = datetime.now(timezone.utc)
-
-    await db[USERS_COLLECTION].update_one(
+    try:
+        db = get_database()
+        now = datetime.now(timezone.utc)
+        await db[USERS_COLLECTION].update_one(
         {"wallet_address": body.wallet_address},
         {
             "$set": {
@@ -75,6 +79,8 @@ async def select_skills(body: SkillSelectionRequest) -> SkillSelectionResponse:
         },
         upsert=True,
     )
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     return SkillSelectionResponse(
         wallet_address=body.wallet_address,
@@ -94,11 +100,14 @@ async def update_skills(body: SkillSelectionRequest) -> SkillSelectionResponse:
             detail=f"Invalid skills: {invalid}. Choose from: {AVAILABLE_SKILLS}",
         )
 
-    db = get_database()
-    result = await db[USERS_COLLECTION].update_one(
-        {"wallet_address": body.wallet_address},
-        {"$set": {"selected_skills": body.selected_skills}},
-    )
+    try:
+        db = get_database()
+        result = await db[USERS_COLLECTION].update_one(
+            {"wallet_address": body.wallet_address},
+            {"$set": {"selected_skills": body.selected_skills}},
+        )
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
 
     if result.matched_count == 0:
         raise HTTPException(
