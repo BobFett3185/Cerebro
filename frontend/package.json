@@ -13,6 +13,7 @@
     "@auth0/auth0-react": "^2.15.0",
     "axios": "^1.13.6",
     "chess.js": "^1.4.0",
+    "peerjs": "^1.5.5",
     "react": "^19.2.0",
     "react-chessboard": "^5.10.0",
     "react-dom": "^19.2.0",
