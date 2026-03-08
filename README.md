@@ -18,7 +18,7 @@ Cerebro wraps competitive mini-games (Chess, Tic-Tac-Toe, Connect 4) with a smar
 - Adaptive Questions: Gemini generates questions that adapt difficulty based on your history
 - Topic Selection: Choose from 20+ topics across Professional, Technical, Fun, and Academic categories
 - Manage Topics: Add or remove topics from your profile at any time
-- SGA Coin Rewards: Earn coins for correct answers
+- Coin Rewards: Earn coins for correct answers and earn a spot on the leaderboard
 - Auth0 Authentication: Secure, passwordless sign-in
 - MongoDB Atlas: Persistent user profiles, skill selections, and question history
 
