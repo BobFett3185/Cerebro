@@ -55,12 +55,22 @@ def _extract_json(text: str) -> dict | list | None:
 
 
 def _validate_mcq(data: Any) -> dict | None:
+    """Validate and normalise an MCQ dict from Gemini."""
     if not isinstance(data, dict):
         return None
-    if not MCQ_KEYS.issubset(data.keys()):
-        return None
+    # Accept 'question' as an alias for 'question_text'
+    if "question" in data and "question_text" not in data:
+        data["question_text"] = data.pop("question")
+    # Only the essential fields are required
+    for key in ("question_text", "options", "correct_answer"):
+        if key not in data:
+            return None
     if not isinstance(data["options"], list) or len(data["options"]) < 2:
         return None
+    # Fill optional fields with sensible defaults
+    data.setdefault("topic", "General")
+    data.setdefault("difficulty", "intermediate")
+    data.setdefault("explanation", "")
     return data
 
 
