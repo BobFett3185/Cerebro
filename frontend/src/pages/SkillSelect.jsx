@@ -1,13 +1,15 @@
 import { useState } from "react"
 import { useAuth0 } from "@auth0/auth0-react"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
 
 export default function SkillSelect() {
   const { user, logout, isAuthenticated, isLoading } = useAuth0()
   const navigate = useNavigate()
 
-  // State to track selected skills
   const [selectedSkills, setSelectedSkills] = useState([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
 
   if (isLoading) return <div>Loading...</div>
 
@@ -60,6 +62,27 @@ export default function SkillSelect() {
         ? prev.filter((s) => s !== skill)
         : [...prev, skill]
     )
+  }
+
+  const handleContinue = async () => {
+    if (selectedSkills.length === 0) {
+      setErrorMsg("Please select at least one topic to continue")
+      return
+    }
+    setErrorMsg("")
+    setIsSaving(true)
+    try {
+      await axios.post("http://localhost:8000/skills/update-skills", {
+        email: user.email,
+        selected_skills: selectedSkills,
+      })
+      navigate("/home")
+    } catch (err) {
+      console.error("Failed to save skills:", err)
+      setErrorMsg("Something went wrong saving your topics. Please try again.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -126,13 +149,18 @@ export default function SkillSelect() {
           ))}
         </div>
 
-        <div className="flex justify-center mt-8">
+        <div className="flex flex-col items-center mt-8 gap-3">
+          {errorMsg && (
+            <p className="text-red-600 font-semibold text-sm">{errorMsg}</p>
+          )}
           <button
-            onClick={() => navigate("/home")}
+            onClick={handleContinue}
+            disabled={isSaving}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-lg text-xl shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            disabled={selectedSkills.length === 0}
           >
-            {selectedSkills.length > 0
+            {isSaving
+              ? "Saving..."
+              : selectedSkills.length > 0
               ? `Continue with ${selectedSkills.length} selected ${selectedSkills.length === 1 ? 'topic' : 'topics'}`
               : "Select a topic to continue"}
           </button>

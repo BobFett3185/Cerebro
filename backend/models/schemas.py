@@ -14,6 +14,38 @@ class HealthResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Auth0 User Login (email-based, no passwords)
+# ---------------------------------------------------------------------------
+class UserLoginRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+
+
+class UserLoginResponse(BaseModel):
+    success: bool = True
+    user: dict[str, Any]
+
+
+class UpdateSkillsRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+    selected_skills: list[str]
+
+
+class UpdateSkillsResponse(BaseModel):
+    success: bool = True
+    user: dict[str, Any]
+
+
+class SetCurrentSkillRequest(BaseModel):
+    email: str = Field(..., min_length=1)
+    current_skill: str = Field(..., min_length=1)
+
+
+class SetCurrentSkillResponse(BaseModel):
+    success: bool = True
+    user: dict[str, Any]
+
+
+# ---------------------------------------------------------------------------
 # Auth – Phantom wallet challenge / verify
 # ---------------------------------------------------------------------------
 class ChallengeRequest(BaseModel):

@@ -125,6 +125,48 @@ async def generate_mcq(topic: str, difficulty: str = "medium") -> dict:
     return _fallback_mcq(topic, difficulty)
 
 
+async def generate_question(topic: str, question_history: list) -> dict:
+    """Generate an adaptive question based on topic and the user's past question history."""
+    if not GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY not set — returning fallback MCQ")
+        return _fallback_mcq(topic, "beginner")
+
+    # Summarise history for the prompt — only include last 10 entries to keep prompt short
+    history_summary = question_history[-10:] if question_history else []
+
+    prompt = (
+    f"You are a smart adaptive learning assistant. "
+    f"Generate a multiple choice question for a user learning about {topic}. "
+    f"Here is the user's question history: {history_summary}. "
+    "If they are getting questions correct make it harder, if wrong make it easier. "
+    "Return JSON with these exact keys: topic, difficulty, question_text, "
+    "options (array of {id, text} objects with ids a/b/c/d), "
+    "correct_answer (must be a/b/c/d), explanation. "
+    "Return nothing else."
+)
+
+    try:
+        client = _get_client()
+        response = await client.aio.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config={
+                "temperature": 0.7,
+                "max_output_tokens": 2048,
+                "response_mime_type": "application/json",
+            },
+        )
+        parsed = _extract_json(response.text)
+        validated = _validate_mcq(parsed)
+        if validated:
+            return validated
+        logger.warning("Gemini returned unparseable adaptive question for topic=%s", topic)
+    except Exception:
+        logger.exception("Gemini adaptive question API error for topic=%s", topic)
+
+    return _fallback_mcq(topic, "beginner")
+
+
 async def generate_question_bank(
     skills: list[str],
     count_per_skill: int = 3,

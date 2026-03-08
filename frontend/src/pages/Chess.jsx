@@ -632,7 +632,6 @@ export default function Chess() {
       <QuestionOverlay 
         isOpen={showQuestion} 
         onAnswer={() => setShowQuestion(false)} 
-        topic="Strategy & Logic"
       />
 
       <style dangerouslySetInnerHTML={{__html: `

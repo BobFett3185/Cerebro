@@ -1,9 +1,20 @@
+import { useState } from "react"
 import { useAuth0 } from "@auth0/auth0-react"
 import { useNavigate } from "react-router-dom"
+import SkillPickerModal from "../components/SkillPickerModal"
 
 export default function Home() {
   const { user, logout, isAuthenticated, isLoading } = useAuth0()
   const navigate = useNavigate()
+
+  const [showSkillPicker, setShowSkillPicker] = useState(false)
+  const [selectedGame, setSelectedGame] = useState("")
+
+  const handleGameClick = (path) => {
+    if (path === "#") return
+    setSelectedGame(path)
+    setShowSkillPicker(true)
+  }
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-[#FDFBF7]">
@@ -158,7 +169,8 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans">
+    <>
+      <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans">
       
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-[#E6E1D3] sticky top-0 z-50">
@@ -175,6 +187,17 @@ export default function Home() {
 
           {isAuthenticated && (
             <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/manage-skills')}
+                title="Manage Topics"
+                className="flex items-center gap-2 bg-[#E6E1D3] hover:bg-[#D4CDBC] text-[#4A5D4A] font-semibold py-2 px-4 rounded-lg shadow-sm transition-all duration-200 hidden sm:flex"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                My Topics
+              </button>
               <button
                 onClick={() => navigate('/leaderboard')}
                 className="bg-[#E6E1D3] hover:bg-[#D4CDBC] text-[#4A5D4A] font-semibold py-2 px-4 rounded-lg shadow-sm transition-all duration-200 hidden sm:block"
@@ -218,7 +241,7 @@ export default function Home() {
               {category.games.map((game) => (
                 <button
                   key={game.id}
-                  onClick={() => game.path !== '#' && navigate(game.path)}
+                  onClick={() => handleGameClick(game.path)}
                   className={`group flex flex-col items-center justify-center aspect-square rounded-[2rem] shadow-md border-2 border-transparent hover:border-[#FDFBF7] ${game.bgColor} ${game.hoverBg} transition-all duration-300 hover:shadow-xl hover:-translate-y-2 relative overflow-hidden ${game.path === '#' ? 'opacity-70 cursor-not-allowed saturate-50' : ''}`}
                 >
                   {/* Soft interior glow */}
@@ -243,5 +266,14 @@ export default function Home() {
 
       </main>
     </div>
+
+    {/* Skill Picker Modal */}
+    {showSkillPicker && (
+      <SkillPickerModal
+        gameRoute={selectedGame}
+        onClose={() => setShowSkillPicker(false)}
+      />
+    )}
+  </>
   )
 }

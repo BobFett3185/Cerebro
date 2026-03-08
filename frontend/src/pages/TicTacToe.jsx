@@ -317,7 +317,6 @@ export default function TicTacToe() {
       <QuestionOverlay 
         isOpen={showQuestion} 
         onAnswer={() => setShowQuestion(false)} 
-        topic="Technology"
       />
       
       <style dangerouslySetInnerHTML={{__html: `

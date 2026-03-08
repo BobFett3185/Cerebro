@@ -7,12 +7,76 @@ from pymongo.errors import PyMongoError
 
 from config import USERS_COLLECTION, get_database
 from models.schemas import (
+    SetCurrentSkillRequest,
+    SetCurrentSkillResponse,
     SkillSelectionRequest,
     SkillSelectionResponse,
+    UpdateSkillsRequest,
+    UpdateSkillsResponse,
     UserSkillsResponse,
 )
 
 router = APIRouter(prefix="/skills", tags=["skills"])
+
+
+@router.post("/update-skills", response_model=UpdateSkillsResponse)
+async def update_skills_by_email(body: UpdateSkillsRequest) -> UpdateSkillsResponse:
+    """Update selected_skills for a user identified by email (Auth0 flow)."""
+    try:
+        db = get_database()
+        result = await db[USERS_COLLECTION].update_one(
+            {"email": body.email},
+            {"$set": {"selected_skills": body.selected_skills}},
+        )
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"User with email '{body.email}' not found.")
+
+    updated = await db[USERS_COLLECTION].find_one({"email": body.email})
+    if updated:
+        updated["_id"] = str(updated["_id"])
+
+    return UpdateSkillsResponse(success=True, user=updated or {})
+
+
+@router.get("/profile")
+async def get_user_profile(email: str = Query(..., min_length=1)) -> dict:
+    """Return full user document for the given email."""
+    try:
+        db = get_database()
+        user = await db[USERS_COLLECTION].find_one({"email": email})
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User with email '{email}' not found.")
+
+    user["_id"] = str(user["_id"])
+    return {"success": True, "user": user}
+
+
+@router.post("/set-current-skill", response_model=SetCurrentSkillResponse)
+async def set_current_skill(body: SetCurrentSkillRequest) -> SetCurrentSkillResponse:
+    """Set the user's currently active skill topic."""
+    try:
+        db = get_database()
+        result = await db[USERS_COLLECTION].update_one(
+            {"email": body.email},
+            {"$set": {"current_skill": body.current_skill}},
+        )
+    except PyMongoError:
+        raise HTTPException(status_code=503, detail="Database temporarily unavailable")
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail=f"User with email '{body.email}' not found.")
+
+    updated = await db[USERS_COLLECTION].find_one({"email": body.email})
+    if updated:
+        updated["_id"] = str(updated["_id"])
+
+    return SetCurrentSkillResponse(success=True, user=updated or {})
 
 AVAILABLE_SKILLS: list[str] = [
     "Python",

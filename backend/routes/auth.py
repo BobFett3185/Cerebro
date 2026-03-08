@@ -22,12 +22,43 @@ from models.schemas import (
     AuthMeResponse,
     ChallengeRequest,
     ChallengeResponse,
+    UserLoginRequest,
+    UserLoginResponse,
     VerifyRequest,
     VerifyResponse,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
+
+
+# ---------------------------------------------------------------------------
+# Auth0 User Login (email-based)
+# ---------------------------------------------------------------------------
+
+@router.post("/users/login", response_model=UserLoginResponse)
+async def users_login(body: UserLoginRequest) -> UserLoginResponse:
+    """Find or create a user by email (Auth0 flow — no passwords stored)."""
+    db = get_database()
+    existing = await db[USERS_COLLECTION].find_one({"email": body.email})
+
+    if existing is None:
+        now = datetime.now(timezone.utc)
+        new_user = {
+            "email": body.email,
+            "selected_skills": [],
+            "points": 0,
+            "wallet_address": "",
+            "created_at": now,
+        }
+        result = await db[USERS_COLLECTION].insert_one(new_user)
+        new_user["_id"] = str(result.inserted_id)
+        user_doc = new_user
+    else:
+        existing["_id"] = str(existing["_id"])
+        user_doc = existing
+
+    return UserLoginResponse(success=True, user=user_doc)
 
 # In-memory challenge store.  Fine for a single-process hackathon demo;
 # swap to a Mongo TTL collection or Redis for multi-process production.

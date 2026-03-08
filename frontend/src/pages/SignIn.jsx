@@ -1,14 +1,38 @@
 import { useAuth0 } from "@auth0/auth0-react"
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
+import { useUser } from "../context/UserContext"
 
 export default function SignIn() {
-  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0()
+  const { loginWithRedirect, user, isAuthenticated, isLoading } = useAuth0()
   const navigate = useNavigate()
+  const { setCurrentUser } = useUser()
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/skill-select")
-  }, [isAuthenticated, navigate])
+    if (!isAuthenticated || !user?.email) return
+
+    const syncUser = async () => {
+      try {
+        const res = await axios.post("http://localhost:8000/auth/users/login", {
+          email: user.email,
+        })
+        const userData = res.data.user
+        setCurrentUser(userData)
+
+        if (!userData.selected_skills || userData.selected_skills.length === 0) {
+          navigate("/skill-select")
+        } else {
+          navigate("/home")
+        }
+      } catch (err) {
+        console.error("Failed to sync user with backend:", err)
+        navigate("/home")
+      }
+    }
+
+    syncUser()
+  }, [isAuthenticated, user, navigate, setCurrentUser])
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-[#FDFBF7]">

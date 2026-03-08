@@ -334,7 +334,6 @@ export default function Connect4() {
       <QuestionOverlay 
         isOpen={showQuestion} 
         onAnswer={() => setShowQuestion(false)} 
-        topic="Cognitive Science"
       />
 
       <style dangerouslySetInnerHTML={{__html: `
