@@ -1,4 +1,5 @@
 # Cerebro
+#This is my fork of the project so I can add more stuff
 
 **Learn while you play.** Cerebro is an adaptive learning platform that challenges users with AI-generated quiz questions whenever they lose a game, turning defeats into learning moments.
 
