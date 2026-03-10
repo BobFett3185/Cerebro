@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore[import]
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 # Load .env from project root first, then backend/.env (with override) so backend can force local DB
@@ -26,7 +26,7 @@ def get_motor_client() -> AsyncIOMotorClient:
     if _motor_client is None:
         # TLS only for Atlas (mongodb+srv); local MongoDB uses plain connection
         if MONGODB_URI.startswith("mongodb+srv://"):
-            import certifi
+            import certifi # type: ignore[import]
             _motor_client = AsyncIOMotorClient(MONGODB_URI, tlsCAFile=certifi.where())
         else:
             _motor_client = AsyncIOMotorClient(MONGODB_URI)

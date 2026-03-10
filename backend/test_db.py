@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 import datetime
-from config import get_database, close_mongo_connection
+from config import get_database, close_mongo_connection # type: ignore[import]
 
 async def test_insertion():
     try:
@@ -9,7 +9,7 @@ async def test_insertion():
         print("Connecting to MongoDB...")
         
         test_collection = db["test_connection"]
-        random_str = f"HackAI_Test_{uuid.uuid4().hex[:8]}"
+        random_str = f"HackAI_Test_{uuid.uuid4().hex[:8]}" # type: ignore[index]
         
         doc = {
             "message": "Connection verified by Antigravity",
